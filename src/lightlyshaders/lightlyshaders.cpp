@@ -35,6 +35,12 @@ namespace KWin
 
 KWIN_EFFECT_FACTORY_SUPPORTED(LightlyShadersEffect, "lightlyshaders.json", return LightlyShadersEffect::supported();)
 
+// The shader blends the outlines with straight alpha, but KWin premultiplies QColor uniforms
+static QVector4D straightColor(const QColor &color)
+{
+    return QVector4D(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+}
+
 LightlyShadersEffect::LightlyShadersEffect()
 {
     m_shader = ShaderManager::instance()->generateShaderFromFile(ShaderTrait::MapTexture,
@@ -195,8 +201,8 @@ bool LightlyShadersEffect::drawWindow(const RenderTarget &renderTarget,
     m_shader->setUniform(m_uniforms.radius, float(m_helper.roundness() * scale));
     m_shader->setUniform(m_uniforms.shadowOffset, float(m_helper.shadowOffset() * scale));
     const bool inactive = m_inactiveOutlines && w != effects->activeWindow();
-    m_shader->setUniform(m_uniforms.innerOutlineColor, inactive ? m_inactiveInnerOutlineColor : m_innerOutlineColor);
-    m_shader->setUniform(m_uniforms.outerOutlineColor, inactive ? m_inactiveOuterOutlineColor : m_outerOutlineColor);
+    m_shader->setUniform(m_uniforms.innerOutlineColor, straightColor(inactive ? m_inactiveInnerOutlineColor : m_innerOutlineColor));
+    m_shader->setUniform(m_uniforms.outerOutlineColor, straightColor(inactive ? m_inactiveOuterOutlineColor : m_outerOutlineColor));
     m_shader->setUniform(m_uniforms.innerOutlineWidth, float(m_innerOutlineWidth * scale));
     m_shader->setUniform(m_uniforms.outerOutlineWidth, float(m_outerOutlineWidth * scale));
     m_shader->setUniform(m_uniforms.drawInnerOutline, int(m_innerOutline));
