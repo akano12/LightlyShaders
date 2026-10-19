@@ -13,7 +13,6 @@
 #include "core/rendertarget.h"
 #include "core/renderviewport.h"
 #include "effect/effecthandler.h"
-#include "opengl/glplatform.h"
 #include "scene/backgroundeffectitem.h"
 #include "scene/windowitem.h"
 #include "wayland/backgroundeffect_v1.h"

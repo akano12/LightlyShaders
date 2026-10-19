@@ -79,8 +79,9 @@ bool LSHelper::isManagedWindow(EffectWindow *w) const
         QStringLiteral("ksmserver"),
     };
 
-    if (w->isDesktop() || w->isPopupMenu() || w->isTooltip() || w->isSpecialWindow() || w->isDropdownMenu() || w->isPopupWindow() || w->isLockScreen()
-        || w->isSplash() || w->isOnScreenDisplay() || w->isUtility() || w->isDock() || w->isToolbar() || w->isMenu()) {
+    // Special windows include the desktop, docks, toolbars, splashes and OSDs,
+    // popup windows include popup and dropdown menus, combo boxes and tooltips
+    if (w->isSpecialWindow() || w->isPopupWindow() || w->isLockScreen() || w->isUtility() || w->isMenu()) {
         return false;
     }
 
