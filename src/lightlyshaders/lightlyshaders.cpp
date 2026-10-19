@@ -168,7 +168,7 @@ void LightlyShadersEffect::prePaintWindow(RenderView *view, EffectWindow *w, Win
     effects->prePaintWindow(view, w, data);
 }
 
-void LightlyShadersEffect::drawWindow(const RenderTarget &renderTarget,
+bool LightlyShadersEffect::drawWindow(const RenderTarget &renderTarget,
                                       const RenderViewport &viewport,
                                       EffectWindow *w,
                                       int mask,
@@ -177,8 +177,7 @@ void LightlyShadersEffect::drawWindow(const RenderTarget &renderTarget,
 {
     const bool visible = viewport.renderRect().intersects(w->expandedGeometry()) || (mask & PAINT_WINDOW_TRANSFORMED);
     if (!drawsCorners(w) || !visible) {
-        effects->drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
-        return;
+        return effects->drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
     }
 
     // Use the scale of the output being painted, a window can span outputs with different scales
@@ -205,9 +204,10 @@ void LightlyShadersEffect::drawWindow(const RenderTarget &renderTarget,
     m_shader->setUniform(m_uniforms.squircleRatio, m_helper.squircleRatio());
     m_shader->setUniform(m_uniforms.isSquircle, int(m_helper.isSquircle()));
 
-    OffscreenEffect::drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
+    const bool drawn = OffscreenEffect::drawWindow(renderTarget, viewport, w, mask, deviceRegion, data);
 
     sm->popShader();
+    return drawn;
 }
 
 void LightlyShadersEffect::windowActivated(EffectWindow *w)

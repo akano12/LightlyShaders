@@ -45,7 +45,7 @@ find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
 
 find_package(XCB REQUIRED COMPONENTS XCB)
 
-find_package(KWin 6.7 REQUIRED COMPONENTS
+find_package(KWin 6.8 REQUIRED COMPONENTS
     kwineffects
 )
 

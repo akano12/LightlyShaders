@@ -21,7 +21,7 @@ It rounds the corners of windows, with optional outlines, and works correctly wi
 - Excluded window classes, for applications that draw their own shape
 
 # Dependencies
-Plasma >= 6.7.
+Plasma >= 6.8.
 
 Arch Linux:
 ```

@@ -42,7 +42,7 @@ public:
 
     void reconfigure(ReconfigureFlags flags) override;
     void prePaintWindow(RenderView *view, EffectWindow *w, WindowPrePaintData &data) override;
-    void drawWindow(const RenderTarget &renderTarget,
+    bool drawWindow(const RenderTarget &renderTarget,
                     const RenderViewport &viewport,
                     EffectWindow *w,
                     int mask,
