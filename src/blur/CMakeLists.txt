@@ -1,23 +1,24 @@
+# The generated settings class, shared by the effect, the settings dialog and the tests
+add_library(lightlyshaders_blurconfig STATIC)
+kconfig_add_kcfg_files(lightlyshaders_blurconfig blurconfig.kcfgc)
+set_target_properties(lightlyshaders_blurconfig PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_include_directories(lightlyshaders_blurconfig PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(lightlyshaders_blurconfig PUBLIC KF6::ConfigGui)
+
 add_subdirectory(kcm)
 
-set(lightlyshaders_blur_SOURCES
+add_library(lightlyshaders_blur MODULE
     blur.cpp
     blur.qrc
     main.cpp
 )
-
-kconfig_add_kcfg_files(lightlyshaders_blur_SOURCES
-    blurconfig.kcfgc
-)
-
-add_library(lightlyshaders_blur MODULE ${lightlyshaders_blur_SOURCES})
 target_link_libraries(lightlyshaders_blur PRIVATE
     KWin::kwin
 
-    KF6::ConfigGui
     XCB::XCB
     KDecoration3::KDecoration
 
+    lightlyshaders_blurconfig
     lshelper
 )
 

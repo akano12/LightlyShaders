@@ -73,8 +73,6 @@ private:
 
     int m_innerOutlineWidth = 0;
     int m_outerOutlineWidth = 0;
-    bool m_innerOutline = false;
-    bool m_outerOutline = false;
     QColor m_innerOutlineColor;
     QColor m_outerOutlineColor;
     bool m_inactiveOutlines = false;
@@ -95,8 +93,6 @@ private:
         int outerOutlineColor = -1;
         int innerOutlineWidth = -1;
         int outerOutlineWidth = -1;
-        int drawInnerOutline = -1;
-        int drawOuterOutline = -1;
         int squircleRatio = -1;
         int isSquircle = -1;
     } m_uniforms;

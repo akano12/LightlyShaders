@@ -29,6 +29,8 @@ private Q_SLOTS:
     void brokenBlurValuesAreClamped();
 
 private:
+    static QString configPath(const QString &fileName);
+    static void writeFile(const QString &path, const QByteArray &contents);
     void writeConfig(const QByteArray &contents);
     QString m_path;
 };
@@ -39,7 +41,7 @@ void ConfigTest::initTestCase()
     QStandardPaths::setTestModeEnabled(true);
     const QString dir = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
     QVERIFY(QDir().mkpath(dir));
-    m_path = dir + QStringLiteral("/lightlyshaders.conf");
+    m_path = configPath(QStringLiteral("lightlyshaders.conf"));
 }
 
 void ConfigTest::cleanup()
@@ -47,12 +49,21 @@ void ConfigTest::cleanup()
     QFile::remove(m_path);
 }
 
-void ConfigTest::writeConfig(const QByteArray &contents)
+QString ConfigTest::configPath(const QString &fileName)
 {
-    QFile file(m_path);
+    return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QLatin1Char('/') + fileName;
+}
+
+void ConfigTest::writeFile(const QString &path, const QByteArray &contents)
+{
+    QFile file(path);
     QVERIFY(file.open(QIODevice::WriteOnly));
     file.write(contents);
-    file.close();
+}
+
+void ConfigTest::writeConfig(const QByteArray &contents)
+{
+    writeFile(m_path, contents);
     LightlyShadersConfig::self()->config()->reparseConfiguration();
     LightlyShadersConfig::self()->load();
 }
@@ -81,11 +92,8 @@ void ConfigTest::brokenValuesAreClamped()
 
 void ConfigTest::brokenBlurValuesAreClamped()
 {
-    const QString path = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral("/kwinrc");
-    QFile file(path);
-    QVERIFY(file.open(QIODevice::WriteOnly));
-    file.write("[Effect-blur]\nBlurStrength=0\nNoiseStrength=1000\nSaturation=-5\n");
-    file.close();
+    const QString path = configPath(QStringLiteral("kwinrc"));
+    writeFile(path, "[Effect-blur]\nBlurStrength=0\nNoiseStrength=1000\nSaturation=-5\n");
 
     BlurConfig::instance(QStringLiteral("kwinrc"));
     BlurConfig::self()->read();
@@ -93,9 +101,7 @@ void ConfigTest::brokenBlurValuesAreClamped()
     QCOMPARE(BlurConfig::noiseStrength(), 14);
     QCOMPARE(BlurConfig::saturation(), 100);
 
-    QVERIFY(file.open(QIODevice::WriteOnly));
-    file.write("[Effect-blur]\nBlurStrength=99\n");
-    file.close();
+    writeFile(path, "[Effect-blur]\nBlurStrength=99\n");
     BlurConfig::self()->config()->reparseConfiguration();
     BlurConfig::self()->read();
     QCOMPARE(BlurConfig::blurStrength(), 15);

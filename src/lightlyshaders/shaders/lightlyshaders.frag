@@ -7,9 +7,7 @@ uniform vec2 frame_size;
 uniform vec2 shadow_origin; // frame position inside the texture: left and bottom shadow size
 uniform float radius;
 uniform float shadow_sample_offset;
-uniform bool draw_inner_outline;
-uniform bool draw_outer_outline;
-uniform float inner_outline_width;
+uniform float inner_outline_width; // 0 when the outline is disabled
 uniform float outer_outline_width;
 uniform vec4 inner_outline_color;
 uniform vec4 outer_outline_color;
@@ -90,14 +88,28 @@ bool inBand(float across, float band_start, float width)
     return across >= band_start && across <= band_start + width;
 }
 
+// Draws the outline color over the window, coverage is how much of the pixel the outline covers
+vec4 blendOutline(vec4 color, vec4 outline_color, float coverage)
+{
+    return mix(color, vec4(outline_color.rgb, 1.0), coverage * outline_color.a);
+}
+
 // Blends an outline into the corner. Like the straight edge outlines, the band is
 // band_start to band_start + width inwards from the window edge (negative is outside).
 vec4 cornerOutline(vec4 color, vec4 outline_color, vec2 p, vec2 center, float band_start, float width)
 {
     float coverage_outer = cornerBounds(p, center, radius - band_start);
     float coverage_inner = cornerBounds(p, center, radius - band_start - width);
-    float outline_alpha = clamp(coverage_outer - coverage_inner, 0.0, 1.0);
-    return mix(color, vec4(outline_color.rgb, 1.0), outline_alpha * outline_color.a);
+    return blendOutline(color, outline_color, clamp(coverage_outer - coverage_inner, 0.0, 1.0));
+}
+
+// Blends an outline into the straight edges the pixel is along, x for the vertical edge
+vec4 edgeOutline(vec4 color, vec4 outline_color, vec2 d, bvec2 along_edge, vec2 band_start, float width)
+{
+    if ((along_edge.x && inBand(d.x, band_start.x, width)) || (along_edge.y && inBand(d.y, band_start.y, width))) {
+        return blendOutline(color, outline_color, 1.0);
+    }
+    return color;
 }
 
 void main()
@@ -153,34 +165,29 @@ void main()
         // A corner with a shadow on only one side has its outlines inside, like without a shadow
         float corner_inner_start = corner_shadow ? 0.0 : outer_outline_width;
         float corner_outer_start = corner_shadow ? -outer_outline_width : 0.0;
-        if (draw_inner_outline) {
+        if (inner_outline_width > 0.0) {
             outColor = cornerOutline(outColor, inner_outline_color, d, center, corner_inner_start, inner_outline_width);
         }
-        if (draw_outer_outline) {
+        if (outer_outline_width > 0.0) {
             outColor = cornerOutline(outColor, outer_outline_color, d, center, corner_outer_start, outer_outline_width);
         }
     } else {
         // Straight edges, only between the corners along them. Outlines wider than the corner
         // radius reach past it, so a pixel can be near a vertical and a horizontal edge at once.
-        bool along_vertical_edge = d.y >= radius;
-        bool along_horizontal_edge = d.x >= radius;
+        bvec2 along_edge = greaterThanEqual(d.yx, vec2(radius)); // along the vertical, horizontal edge
 
         // Shadow padding left by the rounding, continue the shadow from just outside the frame
-        if (along_vertical_edge && edge_shadow.x && d.x > -shadow_sample_offset && d.x <= 0.0) {
+        if (along_edge.x && edge_shadow.x && d.x > -shadow_sample_offset && d.x <= 0.0) {
             outColor = texture(sampler, vec2(shadow_sample_tex.x, texcoord0.y));
-        } else if (along_horizontal_edge && edge_shadow.y && d.y > -shadow_sample_offset && d.y <= 0.0) {
+        } else if (along_edge.y && edge_shadow.y && d.y > -shadow_sample_offset && d.y <= 0.0) {
             outColor = texture(sampler, vec2(texcoord0.x, shadow_sample_tex.y));
         }
 
-        if (draw_inner_outline
-            && ((along_vertical_edge && inBand(d.x, inner_outline_start.x, inner_outline_width))
-                || (along_horizontal_edge && inBand(d.y, inner_outline_start.y, inner_outline_width)))) {
-            outColor = mix(outColor, vec4(inner_outline_color.rgb, 1.0), inner_outline_color.a);
+        if (inner_outline_width > 0.0) {
+            outColor = edgeOutline(outColor, inner_outline_color, d, along_edge, inner_outline_start, inner_outline_width);
         }
-        if (draw_outer_outline
-            && ((along_vertical_edge && inBand(d.x, outer_outline_start.x, outer_outline_width))
-                || (along_horizontal_edge && inBand(d.y, outer_outline_start.y, outer_outline_width)))) {
-            outColor = mix(outColor, vec4(outer_outline_color.rgb, 1.0), outer_outline_color.a);
+        if (outer_outline_width > 0.0) {
+            outColor = edgeOutline(outColor, outer_outline_color, d, along_edge, outer_outline_start, outer_outline_width);
         }
     }
 

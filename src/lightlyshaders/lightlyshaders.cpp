@@ -61,8 +61,6 @@ LightlyShadersEffect::LightlyShadersEffect()
         .outerOutlineColor = m_shader->uniformLocation("outer_outline_color"),
         .innerOutlineWidth = m_shader->uniformLocation("inner_outline_width"),
         .outerOutlineWidth = m_shader->uniformLocation("outer_outline_width"),
-        .drawInnerOutline = m_shader->uniformLocation("draw_inner_outline"),
-        .drawOuterOutline = m_shader->uniformLocation("draw_outer_outline"),
         .squircleRatio = m_shader->uniformLocation("squircle_ratio"),
         .isSquircle = m_shader->uniformLocation("is_squircle"),
     };
@@ -101,17 +99,9 @@ void LightlyShadersEffect::watchWindow(EffectWindow *w)
         }
     });
 
-    // Whether the window is managed depends on its class, caption and decoration, which some
-    // applications only set after the window is shown
-    const auto reevaluate = [this, window = QPointer<EffectWindow>(w)]() {
-        if (window) {
-            m_helper.reevaluate(window);
-            updateRedirect(window);
-        }
-    };
-    connect(w->window(), &Window::windowClassChanged, this, reevaluate);
-    connect(w->window(), &Window::captionChanged, this, reevaluate);
-    connect(w, &EffectWindow::windowDecorationChanged, this, reevaluate);
+    m_helper.watch(w, this, [this](EffectWindow *window) {
+        updateRedirect(window);
+    });
 }
 
 void LightlyShadersEffect::windowDeleted(EffectWindow *w)
@@ -144,10 +134,9 @@ void LightlyShadersEffect::reconfigure(ReconfigureFlags)
 {
     m_helper.reconfigure();
 
-    m_innerOutline = LightlyShadersConfig::innerOutline();
-    m_outerOutline = LightlyShadersConfig::outerOutline();
-    m_innerOutlineWidth = m_innerOutline ? LightlyShadersConfig::innerOutlineWidth() : 0;
-    m_outerOutlineWidth = m_outerOutline ? LightlyShadersConfig::outerOutlineWidth() : 0;
+    // A disabled outline has no width, the shader skips it
+    m_innerOutlineWidth = LightlyShadersConfig::innerOutline() ? LightlyShadersConfig::innerOutlineWidth() : 0;
+    m_outerOutlineWidth = LightlyShadersConfig::outerOutline() ? LightlyShadersConfig::outerOutlineWidth() : 0;
     m_innerOutlineColor = LightlyShadersConfig::innerOutlineColor();
     m_outerOutlineColor = LightlyShadersConfig::outerOutlineColor();
     m_inactiveOutlines = LightlyShadersConfig::inactiveOutlines();
@@ -205,8 +194,6 @@ bool LightlyShadersEffect::drawWindow(const RenderTarget &renderTarget,
     m_shader->setUniform(m_uniforms.outerOutlineColor, straightColor(inactive ? m_inactiveOuterOutlineColor : m_outerOutlineColor));
     m_shader->setUniform(m_uniforms.innerOutlineWidth, float(m_innerOutlineWidth * scale));
     m_shader->setUniform(m_uniforms.outerOutlineWidth, float(m_outerOutlineWidth * scale));
-    m_shader->setUniform(m_uniforms.drawInnerOutline, int(m_innerOutline));
-    m_shader->setUniform(m_uniforms.drawOuterOutline, int(m_outerOutline));
     m_shader->setUniform(m_uniforms.squircleRatio, m_helper.squircleRatio());
     m_shader->setUniform(m_uniforms.isSquircle, int(m_helper.isSquircle()));
 

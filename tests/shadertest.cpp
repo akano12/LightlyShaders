@@ -66,6 +66,7 @@ struct WindowParams {
     float shadowBottom = 0;
     float radius = 11;
     float shadowSampleOffset = 2;
+    // Like the effect, the shader gets a width of 0 for a disabled outline
     float innerOutlineWidth = 1;
     float outerOutlineWidth = 1;
     bool drawInnerOutline = false;
@@ -239,6 +240,13 @@ static std::vector<float> quad(float width, float height)
     return {0, 0, 0, 0, width, 0, 1, 0, width, height, 1, 1, 0, 0, 0, 0, width, height, 1, 1, 0, height, 0, 1};
 }
 
+// Maps positions in pixels onto the target
+static void setProjection(GLuint program, int width, int height)
+{
+    const float projection[16] = {2.0f / width, 0, 0, 0, 0, 2.0f / height, 0, 0, 0, 0, 1, 0, -1, -1, 0, 1};
+    glUniformMatrix4fv(glGetUniformLocation(program, "modelViewProjectionMatrix"), 1, GL_FALSE, projection);
+}
+
 std::vector<unsigned char> ShaderTest::windowWithShadowTexture(const WindowParams &params)
 {
     const int width = params.textureWidth();
@@ -321,18 +329,15 @@ Image ShaderTest::renderWindow(const WindowParams &params, const std::vector<uns
     const int width = params.textureWidth();
     const int height = params.textureHeight();
     return render(m_windowProgram, width, height, quad(width, height), texture, [&params, width, height](GLuint p) {
-        const float projection[16] = {2.0f / width, 0, 0, 0, 0, 2.0f / height, 0, 0, 0, 0, 1, 0, -1, -1, 0, 1};
-        glUniformMatrix4fv(glGetUniformLocation(p, "modelViewProjectionMatrix"), 1, GL_FALSE, projection);
+        setProjection(p, width, height);
         glUniform1i(glGetUniformLocation(p, "sampler"), 0);
         glUniform2f(glGetUniformLocation(p, "frame_size"), params.frameWidth, params.frameHeight);
         glUniform2f(glGetUniformLocation(p, "expanded_size"), params.textureWidth(), params.textureHeight());
         glUniform2f(glGetUniformLocation(p, "shadow_origin"), params.shadowLeft, params.shadowBottom);
         glUniform1f(glGetUniformLocation(p, "radius"), params.radius);
         glUniform1f(glGetUniformLocation(p, "shadow_sample_offset"), params.shadowSampleOffset);
-        glUniform1f(glGetUniformLocation(p, "inner_outline_width"), params.innerOutlineWidth);
-        glUniform1f(glGetUniformLocation(p, "outer_outline_width"), params.outerOutlineWidth);
-        glUniform1i(glGetUniformLocation(p, "draw_inner_outline"), params.drawInnerOutline);
-        glUniform1i(glGetUniformLocation(p, "draw_outer_outline"), params.drawOuterOutline);
+        glUniform1f(glGetUniformLocation(p, "inner_outline_width"), params.drawInnerOutline ? params.innerOutlineWidth : 0);
+        glUniform1f(glGetUniformLocation(p, "outer_outline_width"), params.drawOuterOutline ? params.outerOutlineWidth : 0);
         const Color &inner = params.innerOutlineColor;
         const Color &outer = params.outerOutlineColor;
         glUniform4f(glGetUniformLocation(p, "inner_outline_color"), inner.r, inner.g, inner.b, inner.a);
@@ -556,9 +561,8 @@ Image ShaderTest::renderBlur(GLuint program, float radius, float exponent)
     }
     // The blur passes its vertices in pixels, which the corner distance relies on
     return render(program, width, height, quad(width, height), texture, [=](GLuint p) {
-        const float projection[16] = {2.0f / width, 0, 0, 0, 0, 2.0f / height, 0, 0, 0, 0, 1, 0, -1, -1, 0, 1};
         const float identity[16] = {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-        glUniformMatrix4fv(glGetUniformLocation(p, "modelViewProjectionMatrix"), 1, GL_FALSE, projection);
+        setProjection(p, width, height);
         glUniformMatrix4fv(glGetUniformLocation(p, "colorMatrix"), 1, GL_FALSE, identity);
         glUniform1i(glGetUniformLocation(p, "texUnit"), 0);
         glUniform1f(glGetUniformLocation(p, "offset"), 3);

@@ -4,6 +4,7 @@
 #include <effect/effecthandler.h>
 #include <window.h>
 
+#include <QPointer>
 #include <QRegularExpression>
 
 #include <algorithm>
@@ -129,19 +130,28 @@ void LSHelper::reevaluate(EffectWindow *w)
     }
 }
 
+void LSHelper::watch(EffectWindow *w, QObject *context, const std::function<void(EffectWindow *)> &changed)
+{
+    // The class and caption signals come from the Window, which can outlive its EffectWindow
+    const auto onChange = [this, changed, window = QPointer<EffectWindow>(w)]() {
+        if (window) {
+            reevaluate(window);
+            changed(window);
+        }
+    };
+    QObject::connect(w->window(), &Window::windowClassChanged, context, onChange);
+    QObject::connect(w->window(), &Window::captionChanged, context, onChange);
+    QObject::connect(w, &EffectWindow::windowDecorationChanged, context, onChange);
+}
+
 void LSHelper::windowDeleted(EffectWindow *w)
 {
     m_managed.remove(w);
 }
 
-bool LSHelper::isManaged(EffectWindow *w) const
-{
-    return m_managed.contains(w);
-}
-
 bool LSHelper::shouldRound(EffectWindow *w) const
 {
-    return isManaged(w) && !w->isFullScreen() && !(m_disabledForMaximized && isMaximized(w)) && !(m_disabledForTiled && isTiled(w));
+    return m_managed.contains(w) && !w->isFullScreen() && !(m_disabledForMaximized && isMaximized(w)) && !(m_disabledForTiled && isTiled(w));
 }
 
 bool LSHelper::cornersFit(EffectWindow *w) const

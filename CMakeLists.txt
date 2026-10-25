@@ -22,11 +22,8 @@ include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
 include(KDEClangFormat)
 
-# KWin's effect factory macros declare a Q_OBJECT class, let AutoMoc know
-list(APPEND CMAKE_AUTOMOC_MACRO_NAMES
-    KWIN_EFFECT_FACTORY_SUPPORTED
-    KWIN_EFFECT_FACTORY_SUPPORTED_ENABLED
-)
+# KWin's effect factory macro declares a Q_OBJECT class, let AutoMoc know
+list(APPEND CMAKE_AUTOMOC_MACRO_NAMES KWIN_EFFECT_FACTORY_SUPPORTED)
 
 find_package(Qt6 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
     Core
@@ -45,9 +42,7 @@ find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
 
 find_package(XCB REQUIRED COMPONENTS XCB)
 
-find_package(KWin 6.8 REQUIRED COMPONENTS
-    kwineffects
-)
+find_package(KWin 6.8 REQUIRED)
 
 find_package(KDecoration3 REQUIRED)
 

@@ -12,8 +12,6 @@ target_compile_definitions(shadertest PRIVATE SOURCE_DIR="${PROJECT_SOURCE_DIR}"
 target_link_libraries(shadertest Qt6::Test epoxy::epoxy)
 add_test(NAME shadertest COMMAND shadertest)
 
-set(configtest_SOURCES configtest.cpp)
-kconfig_add_kcfg_files(configtest_SOURCES ../src/lightlyshaders/lightlyshaders_config.kcfgc ../src/blur/blurconfig.kcfgc)
-add_executable(configtest ${configtest_SOURCES})
-target_link_libraries(configtest Qt6::Test KF6::ConfigGui)
+add_executable(configtest configtest.cpp)
+target_link_libraries(configtest Qt6::Test lightlyshaders_config lightlyshaders_blurconfig)
 add_test(NAME configtest COMMAND configtest)

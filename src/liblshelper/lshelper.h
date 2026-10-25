@@ -5,6 +5,8 @@
 #include <QSet>
 #include <QStringList>
 
+#include <functional>
+
 namespace KWin
 {
 
@@ -16,12 +18,13 @@ public:
     // Reloads the settings and re-decides which windows are managed
     void reconfigure();
 
-    // Decides whether the window is managed, again whenever a property it depends on changed
+    // Decides whether the window is managed, depending on its type and class
     void reevaluate(EffectWindow *w);
+    // Decides it again whenever the window's class, caption or decoration changes, which some
+    // applications only set after the window is shown, then calls changed. Disconnected with context.
+    void watch(EffectWindow *w, QObject *context, const std::function<void(EffectWindow *)> &changed);
     void windowDeleted(EffectWindow *w);
 
-    // Whether the window gets rounded corners at all, depending on its type and class
-    bool isManaged(EffectWindow *w) const;
     // Whether the corners should be drawn in the window's current state
     // (not fullscreen, not skipped while maximized or tiled)
     bool shouldRound(EffectWindow *w) const;
