@@ -4,7 +4,7 @@ uniform sampler2D sampler;
 
 uniform vec2 expanded_size;
 uniform vec2 frame_size;
-uniform vec2 shadow_origin; // frame position inside the texture: left and bottom shadow size
+uniform vec2 shadow_origin; // frame position inside the texture: left and top shadow size
 uniform float radius;
 uniform float shadow_sample_offset;
 uniform float inner_outline_width; // 0 when the outline is disabled
@@ -117,7 +117,7 @@ void main()
     vec4 tex = texture(sampler, texcoord0);
 
     // The texture covers the whole window including its shadow, if there is one. Work in
-    // coordinates relative to the frame's bottom left corner (texture coordinates are y-up).
+    // coordinates relative to the frame's top left corner (texture coordinates are y-down).
     bool has_shadow = expanded_size != frame_size;
     vec2 tex_size = has_shadow ? expanded_size : frame_size;
     vec2 origin = has_shadow ? shadow_origin : vec2(0.0);
@@ -132,7 +132,7 @@ void main()
     // Whether the nearest vertical and horizontal edge have a shadow. Shadows can be lopsided,
     // a side without one is handled like a window without a shadow: there is no shadow to
     // continue into the rounded off area and nothing to draw the outer outline on.
-    vec4 shadow_extent = has_shadow ? vec4(origin, tex_size - frame_size - origin) : vec4(0.0); // left, bottom, right, top
+    vec4 shadow_extent = has_shadow ? vec4(origin, tex_size - frame_size - origin) : vec4(0.0); // left, top, right, bottom
     // Less than half a pixel is rounding noise from scaling, not a shadow
     bvec2 edge_shadow = greaterThan(mix(shadow_extent.xy, shadow_extent.zw, vec2(far_side)), vec2(0.5));
     bool corner_shadow = all(edge_shadow);

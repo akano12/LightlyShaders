@@ -185,8 +185,8 @@ bool LightlyShadersEffect::drawWindow(const RenderTarget &renderTarget,
 
     m_shader->setUniform(m_uniforms.frameSize, QVector2D(geo.width(), geo.height()));
     m_shader->setUniform(m_uniforms.expandedSize, QVector2D(expGeo.width(), expGeo.height()));
-    // Where the frame sits in the texture, which is y-up: the left and bottom shadow size
-    m_shader->setUniform(m_uniforms.shadowOrigin, QVector2D(geo.left() - expGeo.left(), expGeo.bottom() - geo.bottom()));
+    // Where the frame sits in the texture, which is y-down: the left and top shadow size
+    m_shader->setUniform(m_uniforms.shadowOrigin, QVector2D(geo.left() - expGeo.left(), geo.top() - expGeo.top()));
     m_shader->setUniform(m_uniforms.radius, float(m_helper.roundness() * scale));
     m_shader->setUniform(m_uniforms.shadowOffset, float(m_helper.shadowOffset() * scale));
     const bool inactive = m_inactiveOutlines && w != effects->activeWindow();
